@@ -13,11 +13,25 @@ sudo apt-get -y -q install linux-headers-$(uname -r) build-essential dkms nfs-co
 sudo apt-get -y -q install curl wget
 
 # Setup sudo to allow no-password sudo for "vagrant"
-groupadd -r -g 990 vagrant
-usermod -a -G vagrant -u 990 vagrant
+OLD_VAGRANT_GID=`id -g vagrant`
+echo "Vagrant group id:"
+echo $OLD_VAGRANT_GID
+VAGRANT_ID=`id -u vagrant`
+echo "Vagrant user has id:"
+echo $VAGRANT_ID
+
+#groupmod -g 990 vagrant
+#find / -gid $OLD_VAGRANT_GID -exec chgrp -h 990 '{}' \+
+
+usermod -a -G vagrant vagrant
 cp /etc/sudoers /etc/sudoers.orig
 sed -i -e '/Defaults\s\+env_reset/a Defaults\texempt_group=vagrant' /etc/sudoers
 sed -i -e 's/%vagrant ALL=(ALL) ALL/%vagrant ALL=NOPASSWD:ALL/g' /etc/sudoers
+
+# Install guest additions
+mount -o loop /home/vagrant/VBoxGuestAdditions_4.3.0.iso /media/cdrom
+sh /media/cdrom/VBoxLinuxAdditions.run || true
+umount /media/cdrom
 
 # Install Puppet
 wget http://apt.puppetlabs.com/puppetlabs-release-precise.deb
